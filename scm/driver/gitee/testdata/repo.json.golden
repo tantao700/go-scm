@@ -1,0 +1,17 @@
+{
+    "ID": "178504",
+    "Namespace": "diaspora",
+    "Name": "diaspora",
+    "Perm": {
+        "Pull": true,
+        "Push": false,
+        "Admin": false
+    },
+    "Branch": "master",
+    "Private": false,
+    "Clone": "https://gitee.com/mirrors/diaspora.git",
+    "CloneSSH": "git@gitee.com:mirrors/diaspora.git",
+    "Link": "https://gitee.com/mirrors/diaspora",
+    "Created": "0001-01-01T00:00:00Z",
+    "Updated": "0001-01-01T00:00:00Z"
+}

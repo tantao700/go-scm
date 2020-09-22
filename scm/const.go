@@ -115,6 +115,7 @@ const (
 	DriverGitlab
 	DriverGogs
 	DriverGitea
+	DriverGitee
 	DriverBitbucket
 	DriverStash
 	DriverCoding
@@ -131,6 +132,8 @@ func (d Driver) String() (s string) {
 		return "gogs"
 	case DriverGitea:
 		return "gitea"
+	case DriverGitee:
+		return "gitee"
 	case DriverBitbucket:
 		return "bitbucket"
 	case DriverStash:

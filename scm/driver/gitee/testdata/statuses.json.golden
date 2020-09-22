@@ -1,0 +1,8 @@
+[
+    {
+        "State": 1,
+        "Label": "default",
+        "Desc": "the dude abides",
+        "Target": "https://gitee.example.com/thedude/gitee-ce/builds/91"
+    }
+]
