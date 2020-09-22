@@ -1,0 +1,9 @@
+Request URL: http: //xtaoo.cn/web-hook/callback
+Request Method: POST
+Content - Type: application / json
+User - Agent: git - oschina - hook
+X - Gitee - Token: gitee
+X - Gitee - Timestamp: 1600756504787
+X - Gitee - Ping: true
+X - Gitee - Event: Push Hook
+X - Git - Oschina - Event: Push Hook
