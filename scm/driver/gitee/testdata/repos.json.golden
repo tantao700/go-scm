@@ -1,0 +1,19 @@
+[
+    {
+        "ID": "1296269",
+        "Namespace": "octocat",
+        "Name": "Hello-World",
+        "Perm": {
+            "Pull": true,
+            "Push": true,
+            "Admin": true
+        },
+        "Branch": "master",
+        "Private": true,
+        "Clone": "https://github.com/tantao700/hello-world.git",
+        "CloneSSH": "git@github.com:tantao700/hello-world.git",
+        "Link": "https://github.com/tantao700/hello-world",
+        "Created": "2011-01-26T19:01:12Z",
+        "Updated": "2011-01-26T19:14:43Z"
+    }
+]
