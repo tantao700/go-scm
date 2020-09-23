@@ -6,6 +6,8 @@ package gitea
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,8 +31,8 @@ func (s *webhookService) Parse(req *http.Request, fn scm.SecretFunc) (scm.Webhoo
 	}
 
 	var hook scm.Webhook
-	switch req.Header.Get("X-Gitea-Event") {
-	case "push":
+	switch req.Header.Get("X-Gitee-Event") {
+	case "Push Hook":
 		hook, err = s.parsePushHook(data)
 	case "create":
 		hook, err = s.parseCreateHook(data)
@@ -52,28 +54,28 @@ func (s *webhookService) Parse(req *http.Request, fn scm.SecretFunc) (scm.Webhoo
 	// get the gitea signature key to verify the payload
 	// signature. If no key is provided, no validation
 	// is performed.
-	key, err := fn(hook)
+	secret, err := fn(hook)
 	if err != nil {
 		return hook, err
-	} else if key == "" {
+	} else if secret == "" {
 		return hook, nil
 	}
-
-	secret := req.FormValue("secret")
-	signature := req.Header.Get("X-Gitea-Signature")
+	token := req.Header.Get("X-Gitee-Token")
 
 	// fail if no signature passed
-	if signature == "" && secret == "" {
+	if token == "" && secret == "" {
 		return hook, scm.ErrSignatureInvalid
 	}
 
-	// test signature if header not set and secret is in payload
-	if signature == "" && secret != "" && secret != key {
+	// get token to hex string
+	tokenByte, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
 		return hook, scm.ErrSignatureInvalid
 	}
+	timestampStr := req.Header.Get("X-Gitee-Timestamp")
 
 	// test signature using header
-	if signature != "" && !hmac.Validate(sha256.New, data, []byte(key), signature) {
+	if !hmac.Validate(sha256.New, []byte(fmt.Sprintf("%s\n%s", timestampStr, secret)), []byte(secret), hex.EncodeToString(tokenByte)) {
 		return hook, scm.ErrSignatureInvalid
 	}
 

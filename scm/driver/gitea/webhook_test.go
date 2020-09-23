@@ -204,9 +204,9 @@ func TestWebhookInvalid(t *testing.T) {
 func TestWebhook_Validated(t *testing.T) {
 	f, _ := ioutil.ReadFile("testdata/webhooks/pull_request_edited.json")
 	r, _ := http.NewRequest("GET", "/?secret=71295b197fa25f4356d2fb9965df3f2379d903d7", bytes.NewBuffer(f))
-	r.Header.Set("X-Gitea-Event", "pull_request")
-	r.Header.Set("X-Gitea-Delivery", "ee8d97b4-1479-43f1-9cac-fbbd1b80da55")
-	r.Header.Set("X-Gitea-Signature", "a31111f057bafe895837f4a93c0f1f528919c199a20438b1fc8e23485780a33a")
+	r.Header.Set("X-Gitee-Event", "Push Hook")
+	r.Header.Set("X-Gitee-Timestamp", "1600784181149")
+	r.Header.Set("X-Gitee-Token", "zHXLOdHbG+qOSgCaq5uPIN6Y2IbXiIwghiQrLLrfJAY=")
 
 	s := new(webhookService)
 	_, err := s.Parse(r, secretFunc)
@@ -218,8 +218,8 @@ func TestWebhook_Validated(t *testing.T) {
 func TestWebhook_MissingSignature(t *testing.T) {
 	f, _ := ioutil.ReadFile("testdata/webhooks/pull_request_edited.json")
 	r, _ := http.NewRequest("GET", "/", bytes.NewBuffer(f))
-	r.Header.Set("X-Gitea-Event", "pull_request")
-	r.Header.Set("X-Gitea-Delivery", "ee8d97b4-1479-43f1-9cac-fbbd1b80da55")
+	r.Header.Set("X-Gitee-Event", "Push Hook")
+	r.Header.Set("X-Gitee-Timestamp", "1600784181149")
 
 	s := new(webhookService)
 	_, err := s.Parse(r, secretFunc)
@@ -229,5 +229,5 @@ func TestWebhook_MissingSignature(t *testing.T) {
 }
 
 func secretFunc(scm.Webhook) (string, error) {
-	return "71295b197fa25f4356d2fb9965df3f2379d903d7", nil
+	return "test", nil
 }
