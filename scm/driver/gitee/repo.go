@@ -60,7 +60,7 @@ type RepositoryService struct {
 func (s *RepositoryService) Find(ctx context.Context, repo string) (*scm.Repository, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s", repo)
 	out := new(repository)
-	res, err := s.client.do(ctx, "GET", path, nil, out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
 	return convertRepository(out), res, err
 }
 
@@ -68,7 +68,7 @@ func (s *RepositoryService) Find(ctx context.Context, repo string) (*scm.Reposit
 func (s *RepositoryService) FindHook(ctx context.Context, repo string, id string) (*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks/%s", repo, id)
 	out := new(hook)
-	res, err := s.client.do(ctx, "GET", path, nil, out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
 	return convertHook(out), res, err
 }
 
@@ -76,7 +76,7 @@ func (s *RepositoryService) FindHook(ctx context.Context, repo string, id string
 func (s *RepositoryService) FindPerms(ctx context.Context, repo string) (*scm.Perm, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s", repo)
 	out := new(repository)
-	res, err := s.client.do(ctx, "GET", path, nil, out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
 	return convertRepository(out).Perm, res, err
 }
 
@@ -84,7 +84,7 @@ func (s *RepositoryService) FindPerms(ctx context.Context, repo string) (*scm.Pe
 func (s *RepositoryService) List(ctx context.Context, opts scm.ListOptions) ([]*scm.Repository, *scm.Response, error) {
 	path := fmt.Sprintf("user/repos?%s", encodeListOptions(opts))
 	out := []*repository{}
-	res, err := s.client.do(ctx, "GET", path, nil, &out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
 	return convertRepositoryList(out), res, err
 }
 
@@ -92,7 +92,7 @@ func (s *RepositoryService) List(ctx context.Context, opts scm.ListOptions) ([]*
 func (s *RepositoryService) ListHooks(ctx context.Context, repo string, opts scm.ListOptions) ([]*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks?%s", repo, encodeListOptions(opts))
 	out := []*hook{}
-	res, err := s.client.do(ctx, "GET", path, nil, &out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
 	return convertHookList(out), res, err
 }
 
@@ -100,7 +100,7 @@ func (s *RepositoryService) ListHooks(ctx context.Context, repo string, opts scm
 func (s *RepositoryService) ListStatus(ctx context.Context, repo, ref string, opts scm.ListOptions) ([]*scm.Status, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/statuses/%s?%s", repo, ref, encodeListOptions(opts))
 	out := []*status{}
-	res, err := s.client.do(ctx, "GET", path, nil, &out)
+	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
 	return convertStatusList(out), res, err
 }
 
@@ -121,7 +121,7 @@ func (s *RepositoryService) CreateHook(ctx context.Context, repo string, input *
 		convertFromHookEvents(input.Events)...,
 	)
 	out := new(hook)
-	res, err := s.client.do(ctx, "POST", path, in, out)
+	res, err := s.client.do(ctx, "POST", v5(path), in, out)
 	return convertHook(out), res, err
 }
 
@@ -135,7 +135,7 @@ func (s *RepositoryService) CreateStatus(ctx context.Context, repo, ref string, 
 		TargetURL:   input.Target,
 	}
 	out := new(status)
-	res, err := s.client.do(ctx, "POST", path, in, out)
+	res, err := s.client.do(ctx, "POST", v5(path), in, out)
 	return convertStatus(out), res, err
 }
 
@@ -150,7 +150,7 @@ func (s *RepositoryService) CreateDeployStatus(ctx context.Context, repo string,
 		TargetURL:      input.Target,
 	}
 	out := new(deployStatus)
-	res, err := s.client.do(ctx, "POST", path, in, out)
+	res, err := s.client.do(ctx, "POST", v5(path), in, out)
 	return convertDeployStatus(out), res, err
 }
 
@@ -170,14 +170,14 @@ func (s *RepositoryService) UpdateHook(ctx context.Context, repo, id string, inp
 		convertFromHookEvents(input.Events)...,
 	)
 	out := new(hook)
-	res, err := s.client.do(ctx, "PATCH", path, in, out)
+	res, err := s.client.do(ctx, "PATCH", v5(path), in, out)
 	return convertHook(out), res, err
 }
 
 // DeleteHook deletes a repository webhook.
 func (s *RepositoryService) DeleteHook(ctx context.Context, repo, id string) (*scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks/%s", repo, id)
-	return s.client.do(ctx, "DELETE", path, nil, nil)
+	return s.client.do(ctx, "DELETE", v5(path), nil, nil)
 }
 
 // helper function to convert from the gogs repository list to

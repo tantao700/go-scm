@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -134,7 +135,11 @@ func websiteAddress(u *url.URL) string {
 	host, proto := u.Host, u.Scheme
 	switch host {
 	case "gitee.com/api/v5":
-		return "https://github.com/"
+		return "https://gitee.com/"
 	}
 	return proto + "://" + host + "/"
+}
+
+func v5(api string) string {
+	return fmt.Sprintf("api/v5/%s", api)
 }
