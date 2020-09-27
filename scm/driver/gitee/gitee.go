@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// package gitee implements a GitHub client.
+// Package gitee implements a Gitee client.
 package gitee
 
 import (
@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -87,7 +88,7 @@ func (c *wrapper) do(ctx context.Context, method, path string, in, out interface
 	defer res.Body.Close()
 
 	// parse the github request id.
-	res.ID = res.Header.Get("X-GitHub-Request-Id")
+	res.ID = res.Header.Get("x-request-id")
 
 	// parse the github rate limit details.
 	res.Rate.Limit, _ = strconv.Atoi(
@@ -102,6 +103,8 @@ func (c *wrapper) do(ctx context.Context, method, path string, in, out interface
 
 	// snapshot the request rate limit
 	c.Client.SetRate(res.Rate)
+
+	consoleInfo(req, res)
 
 	// if an error is encountered, unmarshal and return the
 	// error response.
@@ -140,6 +143,17 @@ func websiteAddress(u *url.URL) string {
 	return proto + "://" + host + "/"
 }
 
-func v5(api string) string {
+func api(api string) string {
 	return fmt.Sprintf("api/v5/%s", api)
+}
+
+func consoleInfo(req *scm.Request, r *scm.Response) {
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("\n", req, "\n----", r.Status, "-----\n", string(buf))
+
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 }

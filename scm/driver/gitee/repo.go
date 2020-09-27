@@ -34,20 +34,23 @@ type repository struct {
 		Admin bool `json:"admin"`
 		Push  bool `json:"push"`
 		Pull  bool `json:"pull"`
-	} `json:"permissions"`
+	} `json:"permission"`
 }
 
-type hook struct {
-	ID     int      `json:"id,omitempty"`
-	Name   string   `json:"name"`
-	Events []string `json:"events"`
-	Active bool     `json:"active"`
-	Config struct {
-		URL         string `json:"url"`
-		Secret      string `json:"secret"`
-		ContentType string `json:"content_type"`
-		InsecureSSL string `json:"insecure_ssl,omitempty"`
-	} `json:"config"`
+type hookCreate struct {
+	ID                  int    `json:"id,omitempty"`
+	AccessToken         string `json:"access_token"`
+	URL                 string `json:"url"`
+	Password            string `json:"password"`                        //optinal
+	PushEvents          bool   `json:"push_events" default:"true"`      //optinal
+	TagPushEvents       bool   `json:"tag_push_events,omitempty"`       //optinal
+	IssuesEvents        bool   `json:"issues_events,omitempty"`         //optinal
+	NoteEvents          bool   `json:"note_events,omitempty"`           //optinal
+	MergeRequestsEvents bool   `json:"merge_requests_events,omitempty"` //optinal
+	CreatedAt           string `json:"created_at,omitempty"`
+	ProjectID           int    `json:"project_id,omitempty"`
+	Result              string `json:"result,omitempty"`
+	ResultCode          int    `json:"result_code,omitempty"`
 }
 
 // RepositoryService implements the repository service for
@@ -60,15 +63,15 @@ type RepositoryService struct {
 func (s *RepositoryService) Find(ctx context.Context, repo string) (*scm.Repository, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s", repo)
 	out := new(repository)
-	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, out)
 	return convertRepository(out), res, err
 }
 
 // FindHook returns a repository hook.
 func (s *RepositoryService) FindHook(ctx context.Context, repo string, id string) (*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks/%s", repo, id)
-	out := new(hook)
-	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
+	out := new(hookCreate)
+	res, err := s.client.do(ctx, "GET", api(path), nil, out)
 	return convertHook(out), res, err
 }
 
@@ -76,7 +79,7 @@ func (s *RepositoryService) FindHook(ctx context.Context, repo string, id string
 func (s *RepositoryService) FindPerms(ctx context.Context, repo string) (*scm.Perm, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s", repo)
 	out := new(repository)
-	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, out)
 	return convertRepository(out).Perm, res, err
 }
 
@@ -84,15 +87,15 @@ func (s *RepositoryService) FindPerms(ctx context.Context, repo string) (*scm.Pe
 func (s *RepositoryService) List(ctx context.Context, opts scm.ListOptions) ([]*scm.Repository, *scm.Response, error) {
 	path := fmt.Sprintf("user/repos?%s", encodeListOptions(opts))
 	out := []*repository{}
-	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, &out)
 	return convertRepositoryList(out), res, err
 }
 
 // ListHooks returns a list or repository hooks.
 func (s *RepositoryService) ListHooks(ctx context.Context, repo string, opts scm.ListOptions) ([]*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks?%s", repo, encodeListOptions(opts))
-	out := []*hook{}
-	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
+	out := []*hookCreate{}
+	res, err := s.client.do(ctx, "GET", api(path), nil, &out)
 	return convertHookList(out), res, err
 }
 
@@ -100,28 +103,20 @@ func (s *RepositoryService) ListHooks(ctx context.Context, repo string, opts scm
 func (s *RepositoryService) ListStatus(ctx context.Context, repo, ref string, opts scm.ListOptions) ([]*scm.Status, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/statuses/%s?%s", repo, ref, encodeListOptions(opts))
 	out := []*status{}
-	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, &out)
 	return convertStatusList(out), res, err
 }
 
 // CreateHook creates a new repository webhook.
 func (s *RepositoryService) CreateHook(ctx context.Context, repo string, input *scm.HookInput) (*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks", repo)
-	in := new(hook)
-	in.Active = true
-	in.Name = "web"
-	in.Config.Secret = input.Secret
-	in.Config.ContentType = "json"
-	in.Config.URL = input.Target
-	if input.SkipVerify {
-		in.Config.InsecureSSL = "1"
-	}
-	in.Events = append(
-		input.NativeEvents,
-		convertFromHookEvents(input.Events)...,
-	)
-	out := new(hook)
-	res, err := s.client.do(ctx, "POST", v5(path), in, out)
+	in := new(hookCreate)
+	in = convertHookInput(input)
+	token, _ := ctx.Value(scm.TokenKey{}).(*scm.Token)
+	in.AccessToken = token.Token
+
+	out := new(hookCreate)
+	res, err := s.client.do(ctx, "POST", api(path), in, out)
 	return convertHook(out), res, err
 }
 
@@ -135,7 +130,7 @@ func (s *RepositoryService) CreateStatus(ctx context.Context, repo, ref string, 
 		TargetURL:   input.Target,
 	}
 	out := new(status)
-	res, err := s.client.do(ctx, "POST", v5(path), in, out)
+	res, err := s.client.do(ctx, "POST", api(path), in, out)
 	return convertStatus(out), res, err
 }
 
@@ -150,34 +145,26 @@ func (s *RepositoryService) CreateDeployStatus(ctx context.Context, repo string,
 		TargetURL:      input.Target,
 	}
 	out := new(deployStatus)
-	res, err := s.client.do(ctx, "POST", v5(path), in, out)
+	res, err := s.client.do(ctx, "POST", api(path), in, out)
 	return convertDeployStatus(out), res, err
 }
 
 // UpdateHook updates a repository webhook.
 func (s *RepositoryService) UpdateHook(ctx context.Context, repo, id string, input *scm.HookInput) (*scm.Hook, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks/%s", repo, id)
-	in := new(hook)
-	in.Active = true
-	in.Config.Secret = input.Secret
-	in.Config.ContentType = "json"
-	in.Config.URL = input.Target
-	if input.SkipVerify {
-		in.Config.InsecureSSL = "1"
-	}
-	in.Events = append(
-		input.NativeEvents,
-		convertFromHookEvents(input.Events)...,
-	)
-	out := new(hook)
-	res, err := s.client.do(ctx, "PATCH", v5(path), in, out)
+	in := new(hookCreate)
+	in.ID, _ = strconv.Atoi(id)
+	in = convertHookInput(input)
+
+	out := new(hookCreate)
+	res, err := s.client.do(ctx, "PATCH", api(path), in, out)
 	return convertHook(out), res, err
 }
 
 // DeleteHook deletes a repository webhook.
 func (s *RepositoryService) DeleteHook(ctx context.Context, repo, id string) (*scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/hooks/%s", repo, id)
-	return s.client.do(ctx, "DELETE", v5(path), nil, nil)
+	return s.client.do(ctx, "DELETE", api(path), nil, nil)
 }
 
 // helper function to convert from the gogs repository list to
@@ -212,7 +199,7 @@ func convertRepository(from *repository) *scm.Repository {
 	}
 }
 
-func convertHookList(from []*hook) []*scm.Hook {
+func convertHookList(from []*hookCreate) []*scm.Hook {
 	to := []*scm.Hook{}
 	for _, v := range from {
 		to = append(to, convertHook(v))
@@ -220,13 +207,49 @@ func convertHookList(from []*hook) []*scm.Hook {
 	return to
 }
 
-func convertHook(from *hook) *scm.Hook {
+func convertHookInput(from *scm.HookInput) *hookCreate {
+	in := new(hookCreate)
+	in.Password = from.Secret
+	in.URL = from.Target
+
+	in.PushEvents = from.Events.Push
+	in.TagPushEvents = from.Events.Tag
+	in.IssuesEvents = from.Events.Issue
+	in.MergeRequestsEvents = from.Events.PullRequest // pull request is merge event ?
+
+	return in
+}
+
+func convertHook(from *hookCreate) *scm.Hook {
+
+	events := []string{"create", "delete", "deployment"}
+
+	if from.PushEvents {
+		events = append(events, "push")
+	}
+
+	if from.MergeRequestsEvents {
+		events = append(events, "pull_request")
+		events = append(events, "pull_request_review_comment")
+	}
+
+	if from.IssuesEvents {
+		events = append(events, "issues")
+		events = append(events, "issue_comment")
+	}
+
+	fromID := func() string {
+		if from.ID == 0 {
+			return ""
+		}
+		return strconv.Itoa(from.ID)
+	}()
 	return &scm.Hook{
-		ID:         strconv.Itoa(from.ID),
-		Active:     from.Active,
-		Target:     from.Config.URL,
-		Events:     from.Events,
-		SkipVerify: from.Config.InsecureSSL == "1",
+		ID:         fromID,
+		Active:     true,
+		Target:     from.URL,
+		Events:     events,
+		SkipVerify: true,
 	}
 }
 

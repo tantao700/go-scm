@@ -20,34 +20,34 @@ type pullService struct {
 func (s *pullService) Find(ctx context.Context, repo string, number int) (*scm.PullRequest, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/pulls/%d", repo, number)
 	out := new(pr)
-	res, err := s.client.do(ctx, "GET", v5(path), nil, out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, out)
 	return convertPullRequest(out), res, err
 }
 
 func (s *pullService) List(ctx context.Context, repo string, opts scm.PullRequestListOptions) ([]*scm.PullRequest, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/pulls?%s", repo, encodePullRequestListOptions(opts))
 	out := []*pr{}
-	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, &out)
 	return convertPullRequestList(out), res, err
 }
 
 func (s *pullService) ListChanges(ctx context.Context, repo string, number int, opts scm.ListOptions) ([]*scm.Change, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/pulls/%d/files?%s", repo, number, encodeListOptions(opts))
 	out := []*file{}
-	res, err := s.client.do(ctx, "GET", v5(path), nil, &out)
+	res, err := s.client.do(ctx, "GET", api(path), nil, &out)
 	return convertChangeList(out), res, err
 }
 
 func (s *pullService) Merge(ctx context.Context, repo string, number int) (*scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/pulls/%d/merge", repo, number)
-	res, err := s.client.do(ctx, "PUT", v5(path), nil, nil)
+	res, err := s.client.do(ctx, "PUT", api(path), nil, nil)
 	return res, err
 }
 
 func (s *pullService) Close(ctx context.Context, repo string, number int) (*scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/pulls/%d", repo, number)
 	data := map[string]string{"state": "closed"}
-	res, err := s.client.do(ctx, "PATCH", v5(path), &data, nil)
+	res, err := s.client.do(ctx, "PATCH", api(path), &data, nil)
 	return res, err
 }
 
@@ -60,7 +60,7 @@ func (s *pullService) Create(ctx context.Context, repo string, input *scm.PullRe
 		Base:  input.Target,
 	}
 	out := new(pr)
-	res, err := s.client.do(ctx, "POST", v5(path), in, out)
+	res, err := s.client.do(ctx, "POST", api(path), in, out)
 	return convertPullRequest(out), res, err
 }
 
