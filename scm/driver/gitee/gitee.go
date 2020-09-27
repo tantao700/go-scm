@@ -12,11 +12,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/drone/go-scm/scm"
 )
+
+var debug = false
+
+func init() {
+	debug, _ = strconv.ParseBool(
+		os.Getenv("DRONE_GITEE_DEBUG"),
+	)
+}
 
 // New returns a new GitHub API client.
 func New(uri string) (*scm.Client, error) {
@@ -104,7 +113,11 @@ func (c *wrapper) do(ctx context.Context, method, path string, in, out interface
 	// snapshot the request rate limit
 	c.Client.SetRate(res.Rate)
 
-	consoleInfo(req, res)
+	if debug {
+		// if DRONE_GITEE_DEBUG=true print the http.Request
+		// headers and body to stdout.
+		dump(req, res)
+	}
 
 	// if an error is encountered, unmarshal and return the
 	// error response.
@@ -147,7 +160,7 @@ func api(api string) string {
 	return fmt.Sprintf("api/v5/%s", api)
 }
 
-func consoleInfo(req *scm.Request, r *scm.Response) {
+func dump(req *scm.Request, r *scm.Response) {
 	buf, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
